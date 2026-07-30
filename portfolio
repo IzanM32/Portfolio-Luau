@@ -1,0 +1,72 @@
+--Makes a NPC with the skin of a friend and making it go into a invisible part
+
+local pathfindingService = game:GetService("PathfindingService")
+local walking = nil
+
+local npc = game.ReplicatedStorage.Costumer
+
+game.Players.PlayerAdded:Connect(function(player)
+	
+	local friends = game.Players:GetFriendsAsync(player.UserId):GetCurrentPage()
+
+	local amigosId = nil
+
+	for index, friend in friends do
+		amigosId = (friends[index].Id)
+	end
+	
+	
+	local npcclon = npc:Clone()
+	npcclon:PivotTo(CFrame.new(33.64, 0.5, -7.93))
+	npcclon.Parent = game.Workspace
+
+	local descripcion = game.Players:GetHumanoidDescriptionFromUserIdAsync(amigosId)
+	npcclon.Humanoid:ApplyDescriptionAsync(descripcion)
+
+	local estadoFunc
+
+	local function cambiarEstado(newState, ClonedNPC)
+		if newState == 'Caminando' then
+			walking(ClonedNPC)
+		elseif newState == 'Inactivo' then
+			estadoFunc()
+		end
+	end
+
+	walking = function(npc)
+		local path = pathfindingService:CreatePath()
+
+		local foodTruck = workspace.Model:WaitForChild("FoodTruck")
+
+		path:ComputeAsync(
+			npc.HumanoidRootPart.Position,
+			workspace.InvisiblePart.Position
+		)
+
+		print("Estado del path:", path.Status)
+
+		local waypoints = path:GetWaypoints()
+		print("Cantidad de waypoints:", #waypoints)
+
+		for i, waypoint in ipairs(waypoints) do
+			print("Waypoint", i, waypoint.Position)
+
+			if waypoint.Action == Enum.PathWaypointAction.Jump then
+				npc.Humanoid.Jump = true
+			end
+
+			npc.Humanoid:MoveTo(waypoint.Position)
+			npc.Humanoid.MoveToFinished:Wait()
+		end
+
+		cambiarEstado("Inactivo", npc)
+	end
+
+	estadoFunc = function()
+		if npcclon then
+			npcclon.Humanoid.WalkSpeed = 0
+		end
+	end	
+
+	cambiarEstado('Caminando', npcclon)
+end)
