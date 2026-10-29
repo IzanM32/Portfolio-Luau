@@ -1,3 +1,5 @@
+-----------------------------------THIS SCRIPT CREATES A LEADERSTAT FOR A GAME WITH MONEY, EXP AND EXP REQUIERED TO UPGRADE LEVEL. IT ALSO STORES THE PLAYER INFO WHEN HE LEAVES AUTOMATICALLY.------------------------
+
 local wall = game.Workspace.Walls.Wall1
 local obby_parts = game.Workspace.Obby_parts
 local tweenservice = game:GetService('TweenService')
