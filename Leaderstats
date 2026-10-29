@@ -1,0 +1,118 @@
+local wall = game.Workspace.Walls.Wall1
+local obby_parts = game.Workspace.Obby_parts
+local tweenservice = game:GetService('TweenService')
+local dataSto = game:GetService('DataStoreService')
+local data2 = dataSto:GetDataStore('data')
+local RunService = game:GetService('RunService')
+
+local tweeninfo = TweenInfo.new(
+	2,
+	Enum.EasingStyle.Quad,
+	Enum.EasingDirection.InOut,
+	0,
+	true,
+	0.5
+)
+
+game.Players.PlayerAdded:Connect(function(player)
+	local leaderstats = Instance.new('Folder')
+	leaderstats.Name = 'leaderstats'
+	leaderstats.Parent = player
+
+	local level = Instance.new('IntValue')
+	level.Name = 'Level'
+	level.Parent = leaderstats
+
+	local money = Instance.new('IntValue')
+	money.Name = 'Money'
+	money.Parent = leaderstats
+	money.Value = 100
+
+	local exp = Instance.new('IntValue')
+	exp.Name = 'EXP'
+	exp.Parent = leaderstats
+	exp.Value = 0
+
+	local expreq = Instance.new('IntValue')
+	expreq.Name = 'EXPRequirement'
+	expreq.Parent = leaderstats
+	expreq.Value = 1000
+
+	local success, err = pcall(function()
+		local data = data2:GetAsync(player.UserId)
+		if data then
+			level.Value = data['Level']
+			exp.Value = data['EXP']
+			money.Value = data['Money']
+			expreq.Value = 1000 + ((level.Value - 1) * 100)
+		end
+	end)
+
+	exp.Changed:Connect(function()
+		if exp.Value >= expreq.Value then
+			level.Value += 1
+			exp.Value = 0
+			expreq.Value += 100  
+			money.Value += 500
+		end
+	end)
+end)
+
+
+
+
+
+for index, part in ipairs(obby_parts:GetChildren()) do
+	if part:IsA('BasePart') then
+		local debounce = false 
+
+		part.Touched:Connect(function(hit)
+			if debounce then return end
+
+			local char = hit.Parent
+			local player = game.Players:GetPlayerFromCharacter(char)
+			if player then
+				debounce = true
+
+				player.leaderstats.Money.Value += (100 + (index * 10))
+				player.leaderstats.EXP.Value += 100
+
+				local properties = {
+					Position = part.Position + Vector3.new(0, -10, 0)
+				}
+				local tween = tweenservice:Create(part, tweeninfo, properties)
+				tween:Play()
+				tween.Completed:Wait()
+
+				debounce = false
+			end
+		end)
+	end
+end
+
+
+game.Players.PlayerRemoving:Connect(function(player)
+	local data = {
+		['Level'] = player.leaderstats.Level.Value,
+		['EXP'] = player.leaderstats.EXP.Value,
+		['Money'] = player.leaderstats.Money.Value
+
+	}
+	local success, err = pcall(function()
+		data2:SetAsync(player.UserId, data)
+	end)
+
+	if success then
+		print('Data saved for '.. player.Name)
+	else
+		warn('Error saving data for '.. player.Name.. err)
+	end
+
+
+end)
+
+game.Workspace.SpawnLocation2.Touched:Connect(function(hit)
+	local player = game.Players:GetPlayerFromCharacter(hit.Parent)
+
+end)
+
